@@ -33,6 +33,18 @@ Constraints:
 
     let html = resp?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
+    // micro self-heal: ensure it's a full HTML doc
+    if (!/^<!DOCTYPE html>/i.test(html) || !/<html[\s>]/i.test(html)) {
+      const retry = await axios.post(url, {
+        contents: [
+          { parts: [{ text:
+            `Retry. Output ONLY a full valid HTML5 single-file page (no markdown fences).
+            Requirement: ${prompt}` }] }
+        ]
+      });
+      html = retry?.data?.candidates?.[0]?.content?.parts?.[0]?.text || html;
+    }
+
     return res.json({ html });
   } catch (e) {
     console.error(e?.response?.data || e.message);
